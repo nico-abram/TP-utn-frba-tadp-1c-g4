@@ -19,8 +19,7 @@ class Trait
 	
 	def estrategiaDefault(proc1, proc2)
 		return Proc.new { |*args| 
-		  throw :trait_method_conflict,
-				'Unresolved trait method conflict' 
+		  raise "Unresolved trait method conflict"
 		}
 	end
 	

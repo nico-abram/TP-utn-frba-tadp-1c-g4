@@ -16,7 +16,7 @@ describe Trait do
 	it "Should not have conflicts" do
 		Trait.define do
 			name :A
-			method :conflictMethod do 
+			method :conflictingMethod do 
 				1
 			end
 			method :anotherMethod do 
@@ -25,14 +25,32 @@ describe Trait do
 		end
 		Trait.define do
 			name :B
-			method :conflictMethod do 
+			method :conflictingMethod do 
 				"Works"
 			end
 		end
 		class SimpleTest
-			uses B + (A - :conflictMethod)
+			uses B + (A - :conflictingMethod)
 		end
-		expect(SimpleTest.new.conflictMethod).to eq "Works"
+		expect(SimpleTest.new.conflictingMethod).to eq "Works"
 		expect(SimpleTest.new.anotherMethod).to eq "Hi"
+	end
+	it "Should have a conflict" do
+		Trait.define do
+			name :A
+			method :conflictingMethod do 
+				1
+			end
+		end
+		Trait.define do
+			name :B
+			method :conflictingMethod do 
+				"Works"
+			end
+		end
+		class SimpleTest
+			uses A + B
+		end
+		expect{SimpleTest.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
 	end
 end

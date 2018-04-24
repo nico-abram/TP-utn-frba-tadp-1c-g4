@@ -1,10 +1,22 @@
-
+	
 class Trait
 	attr_accessor :methodHash
+	attr_accessor :methodToCreateAlias
 
-	def self.define(&bloque)
+	def self.copy(trait)
+		copiedTrait = Trait.new
+		copiedTrait.methodHash = trait.methodHash.clone
+		copiedTrait
+	end
+	
+	def self.create()
 		trait = Trait.new
 		trait.methodHash = Hash.new
+		trait
+	end
+	
+	def self.define(&bloque)
+		trait = Trait.create
 		trait.instance_eval(&bloque)
 	end
 
@@ -24,8 +36,7 @@ class Trait
 	end
 
 	def +(traitASumar)
-		nuevoTrait = Trait.new
-		nuevoTrait.methodHash = Hash.new
+		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, bloque|
 			nuevoTrait.methodHash[sym] = bloque
 		end
@@ -40,12 +51,28 @@ class Trait
 	end
 
 	def -(sym) #sym es el metodo a restar
-		nuevoTrait = Trait.new
-		nuevoTrait.methodHash = self.methodHash.clone
+		nuevoTrait = Trait.copy self
 		nuevoTrait.methodHash.delete sym
 		nuevoTrait
 	end
+	
+	def <<(sym) #metodo al que crear alias
+		nuevoTrait = Trait.copy self
+		nuevoTrait.methodToCreateAlias = sym
+		nuevoTrait
+	end
+	
+	def >(sym) #nombre del alias
+		nuevoTrait = Trait.copy self
+		if @methodToCreateAlias != nil
+			nuevoTrait.methodHash[sym] = methodHash[@methodToCreateAlias]
+			nuevoTrait.methodToCreateAlias = nil
+		# else exception?
+		end
+		nuevoTrait
+	end
 end
+
 
 class Class
 	def uses(traitObj)

@@ -66,6 +66,6 @@ describe Trait do
     class SimpleTest
 			uses A << :metodo1 > :hello
 		end
-    expect{SimpleTest.new.hello}to eq "hi"
+    expect{SimpleTest.new.hello}.to eq "hi"
   end
 end

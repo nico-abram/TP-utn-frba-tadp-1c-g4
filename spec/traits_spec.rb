@@ -52,5 +52,20 @@ describe Trait do
 			uses A + B
 		end
 		expect{SimpleTest.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
-	end
+  end
+  it "Should work with aliases" do
+		Trait.define do
+			name :A
+			method :metodo1 do
+				"hi"
+			end
+			method :metodo2 do
+				"bye"
+			end
+    end
+    class SimpleTest
+			uses A << :metodo1 > :hello
+		end
+    expect{SimpleTest.new.hello}to eq "hi"
+  end
 end

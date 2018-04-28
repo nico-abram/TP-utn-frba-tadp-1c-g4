@@ -1,4 +1,4 @@
-	
+
 class Trait
 	attr_accessor :methodHash
 	attr_accessor :methodToCreateAlias
@@ -24,30 +24,50 @@ class Trait
 		Object.const_set(sym, self)
 	end
 
+	alias_method :get_method, :method
 	# Agregar el metodo sym con el codigo bloque
 	def method(sym, &bloque)
 		methodHash[sym] = bloque
 	end
 
-	def estrategiaDefault(proc1, proc2)
+	def fold(proc1, proc2, &bloque)
 		return Proc.new { |*args| 
-		  raise "Unresolved trait method conflict"
+		  bloque.call(proc1.call(args), proc2.call(args))
 		}
 	end
 
-	def +(traitASumar)
+	def sumar(traitASumar, estrategia, &bloque)
 		nuevoTrait = Trait.create
-		self.methodHash.each do |sym, bloque|
-			nuevoTrait.methodHash[sym] = bloque
+		self.methodHash.each do |sym, proc|
+			nuevoTrait.methodHash[sym] = proc
 		end
-		traitASumar.methodHash.each do |sym, bloque|
+		traitASumar.methodHash.each do |sym, proc|
 			if nuevoTrait.methodHash.has_key? sym
-				nuevoTrait.methodHash[sym] = estrategiaDefault(self.methodHash[sym], bloque)
+				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc, &bloque) 
 			else
-				nuevoTrait.methodHash[sym] = bloque
+				nuevoTrait.methodHash[sym] = proc
 			end
 		end
 		nuevoTrait
+	end
+
+	def +(traitASumar)
+		sumar(traitASumar, Proc.new{ |*args| 
+			Proc.new{ |*args| 
+				raise "Unresolved trait method conflict"
+			}
+		})
+	end
+
+	def method_missing(mensaje, *args, &bloque)
+		if mensaje.to_s.start_with? "sumar_con_"
+			nombreEstrategia = mensaje.to_s[10..-1]
+			if self.respond_to? nombreEstrategia
+				#get_method es una alias de method
+				#porque trait define method
+				sumar(args[0], self.get_method(nombreEstrategia.to_sym), &bloque)
+			end
+		end
 	end
 
 	def -(sym) #sym es el metodo a restar
@@ -82,12 +102,19 @@ class Class
 	end
 end
 
-Trait.define do
-	name :A
-	method :h do
-		"H"
-	end
+Trait.define do name :T1
+	method :num do 1 end
 end
-
-class B uses A end
-# B.new.h
+Trait.define do name :T2
+	method :num do 2 end
+end
+class C
+	uses (T1.sumar_con_fold T2 do |a,b| a+b end)
+end
+puts C.new.num
+#3
+Trait.define do name :A; method :h do "hi" end end
+puts (A << :h > :j) << :j > :k
+	#<Trait:0x00000003b7b030
+	# @methodHash={:h=>#<Proc:0x000000039e78e0@(pry):2>, :j=>#<Proc:0x000000039e78e0@(pry):2>, :k=>#<Proc:0x000000039e78e0@(pry):2>},
+	# @methodToCreateAlias=nil>

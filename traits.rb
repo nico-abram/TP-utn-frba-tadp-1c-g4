@@ -8,7 +8,7 @@ class Trait
 		copiedTrait.methodHash = trait.methodHash.clone
 		copiedTrait
 	end
-	
+
 	def self.create()
 		trait = Trait.new
 		trait.methodHash = Hash.new
@@ -30,52 +30,12 @@ class Trait
 		methodHash[sym] = bloque
 	end
 
-	def fold(proc1, proc2, &bloque)
-		return Proc.new { |*args| 
-		  bloque.call(proc1.call(args), proc2.call(args))
-		}
-	end
-
-	def sumar(traitASumar, estrategia, &bloque)
-		nuevoTrait = Trait.create
-		self.methodHash.each do |sym, proc|
-			nuevoTrait.methodHash[sym] = proc
-		end
-		traitASumar.methodHash.each do |sym, proc|
-			if nuevoTrait.methodHash.has_key? sym
-				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc, &bloque) 
-			else
-				nuevoTrait.methodHash[sym] = proc
-			end
-		end
-		nuevoTrait
-	end
-
-	def +(traitASumar)
-		sumar(traitASumar, Proc.new{ |*args| 
-			Proc.new{ |*args| 
-				raise "Unresolved trait method conflict"
-			}
-		})
-	end
-
-	def method_missing(mensaje, *args, &bloque)
-		if mensaje.to_s.start_with? "sumar_con_"
-			nombreEstrategia = mensaje.to_s[10..-1]
-			if self.respond_to? nombreEstrategia
-				#get_method es una alias de method
-				#porque trait define method
-				sumar(args[0], self.get_method(nombreEstrategia.to_sym), &bloque)
-			end
-		end
-	end
-
 	def -(sym) #sym es el metodo a restar
 		nuevoTrait = Trait.copy self
 		nuevoTrait.methodHash.delete sym
 		nuevoTrait
 	end
-	
+
 	def <<(sym) #metodo al que crear alias
 		nuevoTrait = Trait.copy self
 		nuevoTrait.methodToCreateAlias = sym
@@ -91,6 +51,65 @@ class Trait
 		end
 		nuevoTrait
 	end
+	
+	def sumar(traitASumar, estrategia)
+		nuevoTrait = Trait.create
+		self.methodHash.each do |sym, proc|
+			nuevoTrait.methodHash[sym] = proc
+		end
+		traitASumar.methodHash.each do |sym, proc|
+			if nuevoTrait.methodHash.has_key? sym
+				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc)
+			else
+				nuevoTrait.methodHash[sym] = proc
+			end
+		end
+		nuevoTrait
+	end
+
+	def +(traitASumar)
+		sumar(traitASumar, Proc.new{ |proc_1, proc_2|
+			Proc.new{ |*args| 
+				raise "Unresolved trait method conflict"
+			}
+		})
+	end
+
+	def self.define_strategy(sym_name, &bloque)
+		name_strategy = "def_strategy_".concat(sym_name.to_s)
+		define_method(name_strategy, (bloque))
+
+		define_method("strategy_".concat(sym_name.to_s), Proc.new { |anotherTrait|
+			sumar(anotherTrait, self.get_method(name_strategy))
+		})
+	end
+
+	def strategy_exec_all(anotherTrait)
+		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
+			Proc.new { |*args|
+				proc_1.call(args)
+				proc_2.call(args)
+			}
+		})
+	end
+
+	def strategy_exec_with_fold(anotherTrait, &bloque)
+		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
+			Proc.new { |*args|
+				bloque.call(proc_1.call(args), proc_2.call(args))
+			}
+		})
+	end
+
+	def strategy_exec_with_stop(anotherTrait, &bloque_corte)
+		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
+			Proc.new { |*args|
+				last_return = proc_1.call(args)
+				(bloque_corte.call(last_return)) ? last_return : proc_2.call(args)
+			}
+		})
+	end
+
 end
 
 
@@ -101,20 +120,3 @@ class Class
 		end
 	end
 end
-
-Trait.define do name :T1
-	method :num do 1 end
-end
-Trait.define do name :T2
-	method :num do 2 end
-end
-class C
-	uses (T1.sumar_con_fold T2 do |a,b| a+b end)
-end
-puts C.new.num
-#3
-Trait.define do name :A; method :h do "hi" end end
-puts (A << :h > :j) << :j > :k
-	#<Trait:0x00000003b7b030
-	# @methodHash={:h=>#<Proc:0x000000039e78e0@(pry):2>, :j=>#<Proc:0x000000039e78e0@(pry):2>, :k=>#<Proc:0x000000039e78e0@(pry):2>},
-	# @methodToCreateAlias=nil>

@@ -172,5 +172,10 @@ describe Trait do
 		end
 		expect(TestSuma.new.getAnotherNum).to eq 5
 		expect(TestSuma.new.getSomeNum).to eq 6
+		class TestSuma2
+			uses T1.sumar(T2, Proc.new {|a, b| Proc.new { |*args| a.call(args)}})
+		end
+		expect(TestSuma2.new.getAnotherNum).to eq 5
+		expect(TestSuma2.new.getSomeNum).to eq 6
 	end
 end

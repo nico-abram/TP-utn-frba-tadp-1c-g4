@@ -77,26 +77,26 @@ class Trait
 	end
 
 	def self.define_strategy(sym_name, &bloque)
-		name_strategy = "def_strategy_".concat(sym_name.to_s)
+		name_strategy = "strategy_".concat(sym_name.to_s)
 		define_method(name_strategy, (bloque))
 
-		define_method("strategy_".concat(sym_name.to_s), Proc.new { |anotherTrait, &bloque2|
+		define_method(sym_name, Proc.new { |anotherTrait, &bloque2|
 			sumar(anotherTrait, self.get_method(name_strategy), &bloque2)
 		})
 	end
 
-	define_strategy(:exec_all) { |proc_1, proc_2|
+	define_strategy(:con_todos) { |proc_1, proc_2|
 		Proc.new { |*args|
 			proc_1.call(args)
 			proc_2.call(args)
 		}
 	}
-	define_strategy(:exec_with_fold) { |proc_1, proc_2, &bloque|
+	define_strategy(:foldeando) { |proc_1, proc_2, &bloque|
 		Proc.new { |*args|
 			bloque.call(proc_1.call(args), proc_2.call(args))
 		}
 	}
-	define_strategy(:exec_with_stop) { |proc_1, proc_2, &bloque|
+	define_strategy(:con_corte) { |proc_1, proc_2, &bloque|
 		Proc.new { |*args|
 			last_return = proc_1.call(args)
 			(bloque.call(last_return)) ? last_return : proc_2.call(args)

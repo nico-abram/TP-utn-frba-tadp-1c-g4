@@ -109,7 +109,7 @@ describe Trait do
 		end
 
 		class SimpleTest
-			uses (T1.strategy_exec_all T2)
+			uses (T1.con_todos T2)
 		end
 
 		miTest = SimpleTest.new
@@ -133,7 +133,7 @@ describe Trait do
 		end
 
 		class SimpleTest
-			uses (T1.strategy_exec_with_fold T2 do |res_1, res_2|
+			uses (T1.foldeando T2 do |res_1, res_2|
 					res_1 + res_2
 				end)
 		end
@@ -158,7 +158,7 @@ describe Trait do
 		end
 
 		class SimpleTest
-			uses (T1.strategy_exec_with_stop T2 do |res|
+			uses (T1.con_corte T2 do |res|
 					res.odd?
 				end)
 		end
@@ -189,7 +189,7 @@ describe Trait do
 		end
 
 		class SimpleTest
-			uses T1.strategy_exec_second T2
+			uses T1.exec_second T2
 		end
 
 		miTest = SimpleTest.new

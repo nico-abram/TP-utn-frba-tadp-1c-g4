@@ -40,7 +40,12 @@ class Trait
 
 	def <<(sym) #metodo al que crear alias
 		nuevoTrait = Trait.copy self
-		nuevoTrait.methodToCreateAlias = sym
+		if sym.is_a?(Struct)
+			nuevoTrait.methodToCreateAlias = sym.izq
+			nuevoTrait > sym.der
+		else
+			nuevoTrait.methodToCreateAlias = sym
+		end
 		nuevoTrait
 	end
 	
@@ -133,5 +138,11 @@ class Class
 		traitObj.methodHash.each do |sym, bloque|
 			self.send(:define_method, sym, &bloque)
 		end
+	end
+end
+
+class Symbol
+	def >>(s2)
+		Struct.new(:izq, :der).new(self, s2)
 	end
 end

@@ -47,7 +47,8 @@ class Trait
 		if @methodToCreateAlias != nil
 			nuevoTrait.methodHash[sym] = methodHash[@methodToCreateAlias]
 			nuevoTrait.methodToCreateAlias = nil
-		# else exception?
+		else
+			raise "Attempt to create alias with undefined alias name"
 		end
 		nuevoTrait
 	end

@@ -52,14 +52,14 @@ class Trait
 		nuevoTrait
 	end
 	
-	def sumar(traitASumar, estrategia)
+	def sumar(traitASumar, estrategia, &bloque)
 		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, proc|
 			nuevoTrait.methodHash[sym] = proc
 		end
 		traitASumar.methodHash.each do |sym, proc|
 			if nuevoTrait.methodHash.has_key? sym
-				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc)
+				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc, &bloque)
 			else
 				nuevoTrait.methodHash[sym] = proc
 			end
@@ -79,36 +79,28 @@ class Trait
 		name_strategy = "def_strategy_".concat(sym_name.to_s)
 		define_method(name_strategy, (bloque))
 
-		define_method("strategy_".concat(sym_name.to_s), Proc.new { |anotherTrait|
-			sumar(anotherTrait, self.get_method(name_strategy))
+		define_method("strategy_".concat(sym_name.to_s), Proc.new { |anotherTrait, &bloque2|
+			sumar(anotherTrait, self.get_method(name_strategy), &bloque2)
 		})
 	end
 
-	def strategy_exec_all(anotherTrait)
-		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
-			Proc.new { |*args|
-				proc_1.call(args)
-				proc_2.call(args)
-			}
-		})
-	end
-
-	def strategy_exec_with_fold(anotherTrait, &bloque)
-		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
-			Proc.new { |*args|
-				bloque.call(proc_1.call(args), proc_2.call(args))
-			}
-		})
-	end
-
-	def strategy_exec_with_stop(anotherTrait, &bloque_corte)
-		sumar(anotherTrait, Proc.new { |proc_1, proc_2|
-			Proc.new { |*args|
-				last_return = proc_1.call(args)
-				(bloque_corte.call(last_return)) ? last_return : proc_2.call(args)
-			}
-		})
-	end
+	define_strategy(:exec_all) { |proc_1, proc_2|
+		Proc.new { |*args|
+			proc_1.call(args)
+			proc_2.call(args)
+		}
+	}
+	define_strategy(:exec_with_fold) { |proc_1, proc_2, &bloque|
+		Proc.new { |*args|
+			bloque.call(proc_1.call(args), proc_2.call(args))
+		}
+	}
+	define_strategy(:exec_with_stop) { |proc_1, proc_2, &bloque|
+		Proc.new { |*args|
+			last_return = proc_1.call(args)
+			(bloque.call(last_return)) ? last_return : proc_2.call(args)
+		}
+	}
 
 end
 

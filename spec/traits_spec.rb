@@ -227,14 +227,23 @@ describe Trait do
 				p2.call(args)
 			}
 		end
+		Trait.define_strategy :exec_fst , Proc.new { |p1, p2|
+				Proc.new { |*args|
+					p1.call(args)
+				}
+			}
 
 		class SimpleTest
 			uses T1.exec_second T2
 		end
-
 		miTest = SimpleTest.new
-
 		expect(miTest.getSomeNum).to eq 4
+
+		class SimpleTest2
+			uses T1.exec_fst T2
+		end
+		miTest2 = SimpleTest2.new
+		expect(miTest2.getSomeNum).to eq 6
 	end
 	  
 	it "Estrategia por metodo" do
@@ -255,12 +264,6 @@ describe Trait do
 			method :getAnotherNum do
 				3
 			end
-		end
-		
-		Trait.define_strategy :exec_second do |p1, p2|
-			Proc.new { |*args|
-				p2.call(args)
-			}
 		end
 
 		class SimpleTest
@@ -291,12 +294,6 @@ describe Trait do
 			method :getAnotherNum do
 				3
 			end
-		end
-		
-		Trait.define_strategy :exec_second do |p1, p2|
-			Proc.new { |*args|
-				p2.call(args)
-			}
 		end
 
 		class SimpleTest

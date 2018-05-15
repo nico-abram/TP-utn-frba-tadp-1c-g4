@@ -105,12 +105,13 @@ class Trait
 		nuevoTrait
 	end
 
-	def self.define_strategy(sym_name, &bloque)
-		name_strategy = "estrategia_".concat(sym_name.to_s)
-		define_method(name_strategy, (bloque))
+	def self.define_strategy(sym_nombre, proc_estrategia = nil, &bloque_estrategia)
+		proc_estrategia = bloque_estrategia if bloque_estrategia
+		nombre_strategy = "estrategia_".concat(sym_nombre.to_s)
+		define_method(nombre_strategy, proc_estrategia)
 
-		define_method(sym_name, Proc.new { |anotherTrait, &bloque2|
-			sumar(anotherTrait, self.get_method(name_strategy), &bloque2)
+		define_method(sym_nombre, Proc.new { |anotherTrait, &bloque|
+			sumar(anotherTrait, self.get_method(nombre_strategy), &bloque)
 		})
 	end
 

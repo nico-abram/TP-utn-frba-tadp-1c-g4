@@ -2,6 +2,7 @@
 class Trait
 	attr_accessor :methodHash
 	attr_accessor :methodToCreateAlias
+	attr_accessor :estrategias
 
 	def self.copy(trait)
 		copiedTrait = Trait.new
@@ -12,6 +13,7 @@ class Trait
 	def self.create()
 		trait = Trait.new
 		trait.methodHash = Hash.new
+		trait.estrategias = Hash.new
 		trait
 	end
 	
@@ -60,6 +62,9 @@ class Trait
 		end
 		traitASumar.methodHash.each do |sym, proc|
 			if nuevoTrait.methodHash.has_key? sym
+				estrategiaAUsar = estrategia
+				estrategiaAUsar = estrategias[sym] if estrategias[sym]
+				estrategiaAUsar = traitASumar.estrategias[sym] if traitASumar.estrategias[sym]
 				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc, &bloque)
 			else
 				nuevoTrait.methodHash[sym] = proc
@@ -74,6 +79,10 @@ class Trait
 				raise "Unresolved trait method conflict"
 			}
 		})
+	end
+
+	def solucionar_con(sym_mensaje, sym_estrategia)
+		estrategias[sym_mensaje] = sym_estrategia
 	end
 
 	def self.define_strategy(sym_name, &bloque)

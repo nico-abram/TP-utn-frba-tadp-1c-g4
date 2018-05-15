@@ -53,6 +53,22 @@ describe Trait do
 		expect(SimpleTest.new.hello).to eq "hi"
 	end
 
+	it "Uso alias simple con sintaxis alternative" do
+		Trait.define do
+			name :A
+			method :metodo1 do
+				"hi"
+			end
+			method :metodo2 do
+				"bye"
+			end
+		end
+		class SimpleTest
+			uses A << (:metodo1 >> :hello)
+		end
+		expect(SimpleTest.new.hello).to eq "hi"
+	end
+
 	it "Multiples Alias" do
 		Trait.define do
 			name :A
@@ -69,6 +85,26 @@ describe Trait do
 		end
 		class SimpleTest
 			uses (A << :metodo1 > :metodo2) << :metodo2 > :metodo3
+		end
+		expect(SimpleTest.new.metodo3).to eq "hi"
+	end
+
+	it "Multiples Alias con sintaxis alternativa" do
+		Trait.define do
+			name :A
+			method :h do
+				"hi"
+			end
+		end
+		puts 
+		Trait.define do
+			name :A
+			method :metodo1 do
+				"hi"
+			end
+		end
+		class SimpleTest
+			uses (A << (:metodo1 > :metodo2)) << (:metodo2 > :metodo3)
 		end
 		expect(SimpleTest.new.metodo3).to eq "hi"
 	end

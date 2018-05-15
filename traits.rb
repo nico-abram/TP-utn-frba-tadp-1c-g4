@@ -23,7 +23,12 @@ class Trait
 		trait = Trait.create
 		trait.instance_eval(&bloque)
 		if trait.nombreYaUsado then
-			Object.const_get(trait.nombreYaUsado).instance_eval(&bloque)
+			usedTrait = Object.const_get(trait.nombreYaUsado)
+			if usedTrait.is_a? Trait then
+				usedTrait.instance_eval(&bloque)
+			else
+				raise "Const with trait name already exists"
+			end
 		end
 	end
 

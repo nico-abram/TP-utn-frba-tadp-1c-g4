@@ -178,4 +178,20 @@ describe Trait do
 		expect(TestSuma2.new.getAnotherNum).to eq 5
 		expect(TestSuma2.new.getSomeNum).to eq 6
 	end
+
+	it "'Open Traits'" do
+		helperGeneric(:getSomeNum, 6, 4, :A, :B)
+		helperGeneric(:getAnotherNum, 5, 3, :A, :B)
+
+		class SimpleTest
+			uses A
+		end
+		class SimpleTest2
+			uses B
+		end
+		expect(SimpleTest.new.getSomeNum).to eq 6
+		expect(SimpleTest.new.getAnotherNum).to eq 5
+		expect(SimpleTest2.new.getSomeNum).to eq 4
+		expect(SimpleTest2.new.getAnotherNum).to eq 3
+	end
 end

@@ -3,6 +3,7 @@ class Trait
 	attr_accessor :methodHash
 	attr_accessor :methodToCreateAlias
 	attr_accessor :resoluciones
+	attr_accessor :nombreYaUsado
 
 	def self.copy(trait)
 		copiedTrait = Trait.new
@@ -21,10 +22,17 @@ class Trait
 	def self.define(&bloque)
 		trait = Trait.create
 		trait.instance_eval(&bloque)
+		if trait.nombreYaUsado then
+			Object.const_get(trait.nombreYaUsado).instance_eval(&bloque)
+		end
 	end
 
 	def name(sym)
-		Object.const_set(sym, self)
+		if Object.const_defined?(sym) then
+			self.nombreYaUsado = sym
+		else
+			Object.const_set(sym, self)
+		end
 	end
 
 	alias_method :get_method, :method

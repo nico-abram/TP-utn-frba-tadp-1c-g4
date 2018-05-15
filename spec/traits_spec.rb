@@ -268,4 +268,48 @@ describe Trait do
 		expect(miTest.getSomeNum).to eq 6
 		expect{SimpleTest.new.getAnotherNum}.to raise_error "Unresolved trait method conflict"
 	end
+
+	it "Estrategias definidas en el momento" do
+		Trait.define do
+			name :T1
+			method :getSomeNum do
+				6
+			end
+			method :getAnotherNum do
+				5
+			end
+		end
+		Trait.define do
+			name :T2
+			method :getSomeNum do
+				4
+			end
+			method :getAnotherNum do
+				3
+			end
+		end
+		
+		Trait.define_strategy :exec_second do |p1, p2|
+			Proc.new { |*args|
+				p2.call(args)
+			}
+		end
+
+		class SimpleTest
+			uses T1.solucionar_con(:getSomeNum, Proc.new {|a, b| Proc.new { |*args| b.call(args)}}).
+				solucionar_con(:getAnotherNum) {|a, b| Proc.new { |*args| a.call(args)}}  + T2
+		end
+
+		miTest = SimpleTest.new
+
+		expect(miTest.getSomeNum).to eq 4 #mediante proc
+		expect(miTest.getAnotherNum).to eq 5 #mediante bloque
+
+		
+		class TestSuma
+			uses T1.sumar(T2) {|a, b| Proc.new { |*args| a.call(args)}}
+		end
+		expect(TestSuma.new.getAnotherNum).to eq 5
+		expect(TestSuma.new.getSomeNum).to eq 6
+	end
 end

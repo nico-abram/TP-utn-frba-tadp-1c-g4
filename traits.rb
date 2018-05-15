@@ -2,18 +2,19 @@
 class Trait
 	attr_accessor :methodHash
 	attr_accessor :methodToCreateAlias
-	attr_accessor :estrategias
+	attr_accessor :resoluciones
 
 	def self.copy(trait)
 		copiedTrait = Trait.new
 		copiedTrait.methodHash = trait.methodHash.clone
+		copiedTrait.resoluciones = trait.resoluciones.clone
 		copiedTrait
 	end
 
 	def self.create()
 		trait = Trait.new
 		trait.methodHash = Hash.new
-		trait.estrategias = Hash.new
+		trait.resoluciones = Hash.new
 		trait
 	end
 	
@@ -60,7 +61,8 @@ class Trait
 		nuevoTrait
 	end
 	
-	def sumar(traitASumar, estrategia, &bloque)
+	def sumar(traitASumar, estrategia = nil, &bloque)
+		estrategia = bloque if estrategia == nil
 		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, proc|
 			nuevoTrait.methodHash[sym] = proc
@@ -68,10 +70,8 @@ class Trait
 		traitASumar.methodHash.each do |sym, proc|
 			if nuevoTrait.methodHash.has_key? sym
 				estrategiaAUsar = estrategia
-				estrategiaAUsar = get_method(estrategias[sym]) if 
-					estrategias[sym] && get_method(estrategias[sym])
-				estrategiaAUsar = traitASumar.get_method(traitASumar.estrategias[sym]) if 
-					traitASumar.estrategias[sym] && traitASumar.get_method(traitASumar.estrategias[sym])
+				estrategiaAUsar = resoluciones[sym] if resoluciones[sym]
+				estrategiaAUsar = traitASumar.resoluciones[sym] if traitASumar.resoluciones[sym]
 				nuevoTrait.methodHash[sym] = estrategiaAUsar.call(self.methodHash[sym], proc, &bloque)
 			else
 				nuevoTrait.methodHash[sym] = proc
@@ -88,9 +88,16 @@ class Trait
 		})
 	end
 
-	def solucionar_con(sym_mensaje, sym_estrategia)
-		estrategias[sym_mensaje] = sym_estrategia
-		self
+	def solucionar_con(sym_mensaje, estrategia = nil, &bloque)
+		nuevoTrait = Trait.copy self
+		if estrategia.respond_to?(:call)
+			nuevoTrait.resoluciones[sym_mensaje] = estrategia
+		elsif estrategia && bloque == nil
+			nuevoTrait.resoluciones[sym_mensaje] = nuevoTrait.get_method(estrategia)
+		else
+			nuevoTrait.resoluciones[sym_mensaje] = bloque
+		end
+		nuevoTrait
 	end
 
 	def self.define_strategy(sym_name, &bloque)

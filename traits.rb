@@ -64,6 +64,7 @@ class Trait
 	def sumar(traitASumar, estrategia = nil, &bloque)
 		estrategia = bloque if estrategia == nil
 		estrategia = estrategia_default if estrategia == nil
+		estrategia = self.get_method(estrategia) if estrategia.is_a?(Symbol) || estrategia.is_a?(String)
 		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, proc|
 			nuevoTrait.methodHash[sym] = proc
@@ -111,7 +112,7 @@ class Trait
 		define_method(nombre_strategy, proc_estrategia)
 
 		define_method(sym_nombre, Proc.new { |anotherTrait, &bloque|
-			sumar(anotherTrait, self.get_method(nombre_strategy), &bloque)
+			sumar(anotherTrait, nombre_strategy, &bloque)
 		})
 	end
 

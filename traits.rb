@@ -89,7 +89,7 @@ class Trait
 	end
 
 	def self.define_strategy(sym_name, &bloque)
-		name_strategy = "strategy_".concat(sym_name.to_s)
+		name_strategy = "estrategia_".concat(sym_name.to_s)
 		define_method(name_strategy, (bloque))
 
 		define_method(sym_name, Proc.new { |anotherTrait, &bloque2|
@@ -112,6 +112,16 @@ class Trait
 		Proc.new { |*args|
 			last_return = proc_1.call(args)
 			(bloque.call(last_return)) ? last_return : proc_2.call(args)
+		}
+	}
+	define_strategy(:izq) { |proc_1, proc_2, &bloque|
+		Proc.new { |*args|
+			proc_1.call(args)
+		}
+	}
+	define_strategy(:der) { |proc_1, proc_2, &bloque|
+		Proc.new { |*args|
+			proc_2.call(args)
 		}
 	}
 

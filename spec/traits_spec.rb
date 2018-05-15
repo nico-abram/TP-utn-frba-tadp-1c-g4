@@ -197,18 +197,39 @@ describe Trait do
 		expect(miTest.getSomeNum).to eq 4
 	end
 	  
-	/it "Estrategia de fold" do
-		Trait.define do 
+	it "Estrategia por metodo" do
+		Trait.define do
 			name :T1
-			method :num do |a,b| a+b end
+			method :getSomeNum do
+				6
+			end
+			method :getAnotherNum do
+				5
+			end
 		end
-		Trait.define do name :T2
-			method :num do |a,b| a-b end
+		Trait.define do
+			name :T2
+			method :getSomeNum do
+				4
+			end
+			method :getAnotherNum do
+				3
+			end
 		end
-		class C
-			uses (T1.sumar_con_fold T2 do |a,b| a+b end)
+		
+		Trait.define_strategy :exec_second do |p1, p2|
+			Proc.new { |*args|
+				p2.call(args)
+			}
 		end
-		# 10+5+10-5 = 20
-		expect(C.new.num 10, 5).to eq 20
-	end/
+
+		class SimpleTest
+			uses T1.solucionar_con(:getSomeNum, :estrategia_izq) + T2
+		end
+
+		miTest = SimpleTest.new
+
+		expect(miTest.getSomeNum).to eq 6
+		expect{SimpleTest.new.getAnotherNum}.to raise_error "Unresolved trait method conflict"
+	end
 end

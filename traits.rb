@@ -63,6 +63,7 @@ class Trait
 	
 	def sumar(traitASumar, estrategia = nil, &bloque)
 		estrategia = bloque if estrategia == nil
+		estrategia = estrategia_default if estrategia == nil
 		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, proc|
 			nuevoTrait.methodHash[sym] = proc
@@ -80,12 +81,16 @@ class Trait
 		nuevoTrait
 	end
 
-	def +(traitASumar)
-		sumar(traitASumar, Proc.new{ |proc_1, proc_2|
+	def estrategia_default
+		Proc.new{ |proc_1, proc_2|
 			Proc.new{ |*args| 
 				raise "Unresolved trait method conflict"
 			}
-		})
+		}
+	end
+
+	def +(traitASumar)
+		sumar(traitASumar, estrategia_default)
 	end
 
 	def solucionar_con(sym_mensaje, estrategia = nil, &bloque)

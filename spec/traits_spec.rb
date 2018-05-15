@@ -126,6 +126,10 @@ describe Trait do
 			uses A + B
 		end
 		expect{SimpleTest.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
+		class SimpleTestMensaje
+			uses A.sumar B
+		end
+		expect{SimpleTestMensaje.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
 	end
 
 	it "Estrategia de ejecutar todos los métodos" do

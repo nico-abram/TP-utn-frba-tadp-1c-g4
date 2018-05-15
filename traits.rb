@@ -63,9 +63,11 @@ class Trait
 		traitASumar.methodHash.each do |sym, proc|
 			if nuevoTrait.methodHash.has_key? sym
 				estrategiaAUsar = estrategia
-				estrategiaAUsar = estrategias[sym] if estrategias[sym]
-				estrategiaAUsar = traitASumar.estrategias[sym] if traitASumar.estrategias[sym]
-				nuevoTrait.methodHash[sym] = estrategia.call(self.methodHash[sym], proc, &bloque)
+				estrategiaAUsar = get_method(estrategias[sym]) if 
+					estrategias[sym] && get_method(estrategias[sym])
+				estrategiaAUsar = traitASumar.get_method(traitASumar.estrategias[sym]) if 
+					traitASumar.estrategias[sym] && traitASumar.get_method(traitASumar.estrategias[sym])
+				nuevoTrait.methodHash[sym] = estrategiaAUsar.call(self.methodHash[sym], proc, &bloque)
 			else
 				nuevoTrait.methodHash[sym] = proc
 			end
@@ -83,6 +85,7 @@ class Trait
 
 	def solucionar_con(sym_mensaje, sym_estrategia)
 		estrategias[sym_mensaje] = sym_estrategia
+		self
 	end
 
 	def self.define_strategy(sym_name, &bloque)

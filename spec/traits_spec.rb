@@ -46,15 +46,7 @@ describe Trait do
 		expect(SimpleTest.new.anotherMethod).to eq "Hi"
 	end
 
-  	it "Uso alias simple" do
-		helperGeneric2(:metodo1 , "hi", nil, :metodo2, "bye", nil, :A, :Nada)
-		class SimpleTest
-			uses A << :metodo1 > :hello
-		end
-		expect(SimpleTest.new.hello).to eq "hi"
-	end
-
-	it "Uso alias simple con sintaxis alternative" do
+	it "Uso alias simple" do
 		helperGeneric2(:metodo1 , "hi", nil, :metodo2, "bye", nil, :A, :Nada)
 		class SimpleTest
 			uses A << (:metodo1 >> :hello)
@@ -65,15 +57,7 @@ describe Trait do
 	it "Multiples Alias" do
 		helperGeneric2(:metodo1 , "hi", nil, :metodo2, "bye", nil, :A, :Nada)
 		class SimpleTest
-			uses (A << :metodo1 > :metodo2) << :metodo2 > :metodo3
-		end
-		expect(SimpleTest.new.metodo3).to eq "hi"
-	end
-
-	it "Multiples Alias con sintaxis alternativa" do
-		helperGeneric2(:metodo1 , "hi", nil, :metodo2, "bye", nil, :A, :Nada)
-		class SimpleTest
-			uses (A << (:metodo1 > :metodo2)) << (:metodo2 > :metodo3)
+			uses (A << (:metodo1 >> :metodo2)) << (:metodo2 >> :metodo3)
 		end
 		expect(SimpleTest.new.metodo3).to eq "hi"
 	end
@@ -84,10 +68,6 @@ describe Trait do
 			uses A + B
 		end
 		expect{SimpleTest.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
-		class SimpleTestMensaje
-			uses A.sumar B
-		end
-		expect{SimpleTestMensaje.new.conflictingMethod}.to raise_error "Unresolved trait method conflict"
 	end
 
 	it "Estrategia de ejecutar todos los métodos" do
@@ -103,7 +83,7 @@ describe Trait do
 			end
 		end
 		class SimpleTest
-			uses (T1.con_todos T2)
+			uses (T1.con_todos :random_operation) +  T2
 		end
 		expect(SimpleTest.new.random_operation()).to eq 8
 	end
@@ -111,9 +91,9 @@ describe Trait do
 	it "Estrategia de ejecutar con fold" do
 		helperGeneric(:random_operation, 7, 3)
 		class SimpleTest
-			uses (T1.foldeando T2 do |res_1, res_2|
+			uses T1.foldeando(:random_operation) { |res_1, res_2|
 					res_1 + res_2
-				end)
+				} + T2
 		end
 		expect(SimpleTest.new.random_operation()).to eq 10
 	end
@@ -121,31 +101,31 @@ describe Trait do
 	it "Estrategia de condición de corte" do
 		helperGeneric(:random_operation, 7, 8)
 		class SimpleTest
-			uses (T1.con_corte T2 do |res|
+			uses (T1.con_corte(:random_operation) do |res|
 					res.odd?
-				end)
+				end) + T2
 		end
 		expect(SimpleTest.new.random_operation()).to eq 7
 	end
 
 	it "Definir propia estrategia (ejecutar segundo método)" do
 		helperGeneric(:getSomeNum, 6, 4)
-		Trait.define_strategy :exec_second do |p1, p2|
-			Proc.new { |*args|
-				p2.call(args)
+		class SimpleTest
+			exec_second = Proc.new { |p1, p2|
+				Proc.new { |*args|
+					p2.call(args)
+				}
 			}
+			uses T1.solucionar_con(:getSomeNum, exec_second) + T2
 		end
-		Trait.define_strategy :exec_fst , Proc.new { |p1, p2|
+		expect(SimpleTest.new.getSomeNum).to eq 4
+		class SimpleTest2
+			exec_fst = Proc.new { |p1, p2|
 				Proc.new { |*args|
 					p1.call(args)
 				}
 			}
-		class SimpleTest
-			uses T1.exec_second T2
-		end
-		expect(SimpleTest.new.getSomeNum).to eq 4
-		class SimpleTest2
-			uses T1.exec_fst T2
+			uses T1.solucionar_con(:getSomeNum, exec_fst) + T2
 		end
 		expect(SimpleTest2.new.getSomeNum).to eq 6
 	end
@@ -153,7 +133,12 @@ describe Trait do
 	it "Estrategia por metodo" do
 		helperGeneric2(:getSomeNum, 6, 4, :getAnotherNum, 5, 3)
 		class SimpleTest
-			uses T1.solucionar_con(:getSomeNum, :estrategia_izq) + T2
+			izquierda = Proc.new { |proc_1, proc_2|
+				Proc.new { |*args|
+					proc_1.call(args)
+				}
+			}
+			uses T1.solucionar_con(:getSomeNum, izquierda) + T2
 		end
 		expect(SimpleTest.new.getSomeNum).to eq 6
 		expect{SimpleTest.new.getAnotherNum}.to raise_error "Unresolved trait method conflict"
@@ -167,16 +152,6 @@ describe Trait do
 		end
 		expect(SimpleTest.new.getSomeNum).to eq 4 #mediante proc
 		expect(SimpleTest.new.getAnotherNum).to eq 5 #mediante bloque
-		class TestSuma
-			uses T1.sumar(T2) {|a, b| Proc.new { |*args| a.call(args)}}
-		end
-		expect(TestSuma.new.getAnotherNum).to eq 5
-		expect(TestSuma.new.getSomeNum).to eq 6
-		class TestSuma2
-			uses T1.sumar(T2, Proc.new {|a, b| Proc.new { |*args| a.call(args)}})
-		end
-		expect(TestSuma2.new.getAnotherNum).to eq 5
-		expect(TestSuma2.new.getSomeNum).to eq 6
 	end
 
 	it "'Open Traits'" do

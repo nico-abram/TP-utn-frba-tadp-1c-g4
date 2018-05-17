@@ -49,30 +49,12 @@ class Trait
 
 	def <<(sym) #metodo al que crear alias
 		nuevoTrait = Trait.copy self
-		if sym.is_a?(Struct)
-			nuevoTrait.methodToCreateAlias = sym.izq
-			nuevoTrait > sym.der
-		else
-			nuevoTrait.methodToCreateAlias = sym
-		end
+		nuevoTrait.methodHash[sym.der] = methodHash[sym.izq]
 		nuevoTrait
 	end
-	
-	def >(sym) #nombre del alias
-		nuevoTrait = Trait.copy self
-		if @methodToCreateAlias != nil
-			nuevoTrait.methodHash[sym] = methodHash[@methodToCreateAlias]
-			nuevoTrait.methodToCreateAlias = nil
-		else
-			raise "Attempt to create alias with undefined alias name"
-		end
-		nuevoTrait
-	end
-	
-	def sumar(traitASumar, estrategia = nil, &bloque)
-		estrategia = bloque if estrategia == nil
-		estrategia = estrategia_default if estrategia == nil
-		estrategia = self.get_method(estrategia) if estrategia.is_a?(Symbol) || estrategia.is_a?(String)
+
+	def +(traitASumar)
+		estrategia = estrategia_default
 		nuevoTrait = Trait.create
 		self.methodHash.each do |sym, proc|
 			nuevoTrait.methodHash[sym] = proc
@@ -82,7 +64,7 @@ class Trait
 				estrategiaAUsar = estrategia
 				estrategiaAUsar = resoluciones[sym] if resoluciones[sym]
 				estrategiaAUsar = traitASumar.resoluciones[sym] if traitASumar.resoluciones[sym]
-				nuevoTrait.methodHash[sym] = estrategiaAUsar.call(self.methodHash[sym], proc, &bloque)
+				nuevoTrait.methodHash[sym] = estrategiaAUsar.call(self.methodHash[sym], proc)
 			else
 				nuevoTrait.methodHash[sym] = proc
 			end
@@ -98,16 +80,10 @@ class Trait
 		}
 	end
 
-	def +(traitASumar)
-		sumar(traitASumar, estrategia_default)
-	end
-
 	def solucionar_con(sym_mensaje, estrategia = nil, &bloque)
 		nuevoTrait = Trait.copy self
 		if estrategia.respond_to?(:call)
 			nuevoTrait.resoluciones[sym_mensaje] = estrategia
-		elsif estrategia && bloque == nil
-			nuevoTrait.resoluciones[sym_mensaje] = nuevoTrait.get_method(estrategia)
 		else
 			nuevoTrait.resoluciones[sym_mensaje] = bloque
 		end
@@ -116,11 +92,15 @@ class Trait
 
 	def self.define_strategy(sym_nombre, proc_estrategia = nil, &bloque_estrategia)
 		proc_estrategia = bloque_estrategia if bloque_estrategia
-		nombre_strategy = "estrategia_".concat(sym_nombre.to_s)
-		define_method(nombre_strategy, proc_estrategia)
+		define_method(sym_nombre, Proc.new { |mensaje|
+			solucionar_con(mensaje, proc_estrategia)
+		})
+	end
 
-		define_method(sym_nombre, Proc.new { |anotherTrait, &bloque|
-			sumar(anotherTrait, nombre_strategy, &bloque)
+	def self.define_dependant_strategy(sym_nombre, proc_estrategia = nil, &bloque_estrategia)
+		proc_estrategia = bloque_estrategia unless proc_estrategia
+		define_method(sym_nombre, Proc.new { |mensaje, &bloque|
+			solucionar_con(mensaje, proc_estrategia.call(bloque))
 		})
 	end
 
@@ -130,30 +110,32 @@ class Trait
 			proc_2.call(args)
 		}
 	}
-	define_strategy(:foldeando) { |proc_1, proc_2, &bloque|
-		Proc.new { |*args|
-			bloque.call(proc_1.call(args), proc_2.call(args))
+	define_dependant_strategy(:foldeando) { |bloque|
+		Proc.new { |proc_1, proc_2|
+			Proc.new { |*args|
+				bloque.call(proc_1.call(args), proc_2.call(args))
+			}
 		}
 	}
-	define_strategy(:con_corte) { |proc_1, proc_2, &bloque|
-		Proc.new { |*args|
-			last_return = proc_1.call(args)
-			(bloque.call(last_return)) ? last_return : proc_2.call(args)
+	define_dependant_strategy(:con_corte) { |bloque_de_corte|
+		Proc.new { |proc_1, proc_2|
+			Proc.new { |*args|
+				last_return = proc_1.call(args)
+				(bloque_de_corte.call(last_return)) ? last_return : proc_2.call(args)
+			}
 		}
 	}
-	define_strategy(:izq) { |proc_1, proc_2, &bloque|
+	define_strategy(:izq) { |proc_1, proc_2|
 		Proc.new { |*args|
 			proc_1.call(args)
 		}
 	}
-	define_strategy(:der) { |proc_1, proc_2, &bloque|
+	define_strategy(:der) { |proc_1, proc_2|
 		Proc.new { |*args|
 			proc_2.call(args)
 		}
 	}
-
 end
-
 
 class Class
 	def uses(traitObj)

@@ -1,23 +1,8 @@
 
 class Trait
 	attr_accessor :methodHash
-	attr_accessor :methodToCreateAlias
 	attr_accessor :resoluciones
 	attr_accessor :nombreYaUsado
-
-	def self.copy(trait)
-		copiedTrait = Trait.new
-		copiedTrait.methodHash = trait.methodHash.clone
-		copiedTrait.resoluciones = trait.resoluciones.clone
-		copiedTrait
-	end
-
-	def self.create()
-		trait = Trait.new
-		trait.methodHash = Hash.new
-		trait.resoluciones = Hash.new
-		trait
-	end
 	
 	def self.define(&bloque)
 		trait = Trait.create
@@ -30,20 +15,6 @@ class Trait
 				raise "Const with trait name already exists"
 			end
 		end
-	end
-
-	def name(sym)
-		if Object.const_defined?(sym) then
-			self.nombreYaUsado = sym
-		else
-			Object.const_set(sym, self)
-		end
-	end
-
-	alias_method :get_method, :method
-	# Agregar el metodo sym con el codigo bloque
-	def method(sym, &bloque)
-		methodHash[sym] = bloque
 	end
 
 	def -(sym) #sym es el metodo a restar
@@ -140,6 +111,37 @@ class Trait
 			proc_2.call(args)
 		}
 	}
+
+	private
+
+	def self.copy(trait)
+		copiedTrait = Trait.new
+		copiedTrait.methodHash = trait.methodHash.clone
+		copiedTrait.resoluciones = trait.resoluciones.clone
+		copiedTrait
+	end
+
+	def self.create()
+		trait = Trait.new
+		trait.methodHash = Hash.new
+		trait.resoluciones = Hash.new
+		trait
+	end
+
+	def name(sym)
+		if Object.const_defined?(sym) then
+			self.nombreYaUsado = sym
+		else
+			Object.const_set(sym, self)
+		end
+	end
+
+	alias_method :get_method, :method
+	# Agregar el metodo sym con el codigo bloque
+	def method(sym, &bloque)
+		methodHash[sym] = bloque
+	end
+
 end
 
 class Class

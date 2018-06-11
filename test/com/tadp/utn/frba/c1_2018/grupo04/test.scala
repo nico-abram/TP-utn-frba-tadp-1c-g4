@@ -1,49 +1,61 @@
 package com.tadp.utn.frba.c1_2018.grupo04
-import org.junit.Before
-import org.junit.Test
-import org.junit.Assert._
+
+import com.tadp.utn.frba.c1_2018.grupo04._
+import org.junit._
+import Assert._
 
 @Test
 class Apuesta_Test {
 
-  private var apuesta1: ApuestaSimple = _
-  private var apuesta2: ApuestaSimple = _
-  private var apuestaCompuesta1: ApuestaCompuesta = _
+  var apuesta1: ApuestaSimple = _
+  var apuesta2: ApuestaSimple = _
+  var apuestaCompuesta1: ApuestaCompuesta = _
   @Before
-  def setup() = {
+  def setup() = { 
     apuesta1 = ApuestaSimple(Cara(), 10.0)
     apuesta2 = ApuestaSimple(Numero(0), 15.0)
     apuestaCompuesta1 = ApuestaCompuesta(Seq(apuesta1, apuesta2))
   }
 
+  def par() = { 
+    apuesta1 = ApuestaSimple(Cara(), 10.0)
+    apuesta2 = ApuestaSimple(Numero(0), 15.0)
+    apuestaCompuesta1 = ApuestaCompuesta(Seq(apuesta1, apuesta2).par)
+  }
+  
   @Test
-  def ApuestaSimple1_test() = {
+  def TestApuestaSimple1() = {
+    val res = apuesta1(10.0)
     assertEquals(
       NodoArbol(
         100.0,
         NodoArbol(50.0, HojaArbol(0.0)),
         NodoArbol(50.0, HojaArbol(20.0))): ArbolRaro[Double, Double],
-      apuesta1(10.0))
+      res)
+    res
   }
   @Test
-  def ApuestaSimple2_test() = {
+  def TestApuestaSimple2() = {
+    val res = apuesta2(15.0)
     val NodoArbol(_,
       NodoArbol(p1, HojaArbol(m1)),
-      NodoArbol(p2, HojaArbol(m2))): ArbolRaro[Double, Double] = apuesta2(15.0)
+      NodoArbol(p2, HojaArbol(m2))): ArbolRaro[Double, Double] = res
     assertEquals(m1, 0.0, 0.05)
     assertEquals(m2, 540.0, 0.05)
     assertEquals(p1, 100.0 - Numero(0).probabilidad, 0.05)
     assertEquals(p2, Numero(0).probabilidad, 0.05)
+    res
   }
   @Test
-  def ApuestaCompuesta2_test() = {
+  def TestApuestaCompuesta1() = {
+    val res = apuestaCompuesta1(15.0)
     val NodoArbol(_,
       NodoArbol(p1, HojaArbol(m1)),
       NodoArbol(p4,
         NodoArbol(_,
           NodoArbol(p2, HojaArbol(m2)),
           NodoArbol(p3, HojaArbol(m3))
-          ))): ArbolRaro[Double, Double] = apuestaCompuesta1(15.0)
+          ))): ArbolRaro[Double, Double] = res
     assertEquals(m1, 5.0, 0.05)
     assertEquals(m2, 10.0, 0.05)
     assertEquals(m3, 550.0, 0.05)
@@ -51,9 +63,10 @@ class Apuesta_Test {
     assertEquals(p2, 100.0 - Numero(0).probabilidad, 0.05)
     assertEquals(p3, Numero(0).probabilidad, 0.05)
     assertEquals(p4, Cruz().probabilidad, 0.05)
+    res
   }
   @Test
-  def AplanarResultado_test() = {
+  def TestAplanarResultado() = {
     val x = apuestaCompuesta1.aplanada(15.0)
     assertEquals(3, x.length)
     val Some(res1) = x.find(_._1 == 550)
@@ -66,6 +79,11 @@ class Apuesta_Test {
     assertEquals(
       Cara().probabilidad * (100.0 - Numero(0).probabilidad) / 100.0,
       res3._2, 0.05)
+    x
+  }
+  @Test
+  def TestFalla() = {
+    assertEquals(3, 2)
   }
 
 }

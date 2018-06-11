@@ -11,5 +11,5 @@ object Moneda extends Juego {
 
 sealed trait JugadaMoneda extends JugadaDeJuego {
   def ganancia(x: Double): Double = x * 2.0
-  val juego = Moneda
+  def juego = Moneda
 }

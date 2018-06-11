@@ -1,16 +1,17 @@
 package com.tadp.utn.frba.c1_2018.grupo04
 import Suceso._
+import scala.collection.GenSeq
 
 trait Jugada {
   def ganancia(monto: Double): Double
   def sucesoGanador(suceso: Suceso): Boolean
-  val resultadosPosibles: Seq[Suceso]
+  val resultadosPosibles: GenSeq[Suceso]
   def probabilidadDe(s: Suceso): Double
   lazy val probabilidad = probabilidadDe(this)
 }
 
 trait JugadaDeJuego extends Jugada {
-  val juego: Juego
+  def juego: Juego
   def ganancia(monto: Double): Double
   def sucesoGanador(suceso: Suceso) = juego.sucesoGanador(suceso, this)
   lazy val resultadosPosibles = juego.resultadosPosibles

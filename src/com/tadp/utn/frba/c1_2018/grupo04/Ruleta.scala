@@ -1,9 +1,9 @@
 package com.tadp.utn.frba.c1_2018.grupo04
 import Suceso._
+import scala.collection.GenSeq
 
-sealed trait JugadaRuleta extends JugadaDeJuego {
+abstract class JugadaRuleta(val juego: Juego = Ruleta) extends JugadaDeJuego {
   def ganancia(x: Double) = x * 2
-  val juego = Ruleta
 }
 case class Par() extends JugadaRuleta
 case class Impar() extends JugadaRuleta
@@ -17,7 +17,7 @@ case class Numero(numero: Int) extends JugadaRuleta {
 }
 
 object Ruleta extends Juego {
-  private val sucesos: Seq[JugadaRuleta] = Range(0, 36).map(Numero(_))
+  val sucesos = Range(0, 36).map(Numero(_))
   val distribucion = Equiprobable(sucesos)
   override def sucesoGanador(suceso: Suceso, resultado: Jugada): Boolean = resultado match {
     case Numero(i) => suceso match {

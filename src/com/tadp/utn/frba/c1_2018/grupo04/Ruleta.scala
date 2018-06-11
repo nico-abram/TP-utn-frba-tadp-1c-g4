@@ -1,7 +1,7 @@
 package com.tadp.utn.frba.c1_2018.grupo04
 import Suceso._
 
-trait JugadaRuleta extends JugadaDeJuego {
+sealed trait JugadaRuleta extends JugadaDeJuego {
   def ganancia(x: Double) = x * 2
   val juego = Ruleta
 }

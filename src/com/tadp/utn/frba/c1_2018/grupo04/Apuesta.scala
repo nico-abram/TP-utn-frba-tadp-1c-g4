@@ -24,6 +24,6 @@ case class ApuestaSimple(jugada: Jugada, monto: Double) extends Apuesta {
 case class ApuestaCompuesta(apuestas: Seq[ApuestaSimple]) extends Apuesta {
   def apply(montoInicial: Double): Resultado =
     apuestas.tail.foldLeft(apuestas.head(montoInicial)) { (r: Resultado, ap: ApuestaSimple) =>
-      r.bind((m: Double) => if (ap.monto <= m) ap.apply(m) else HojaArbol[Double, Double](m))
+      r.flatMap((m: Double) => if (ap.monto <= m) ap.apply(m) else HojaArbol[Double, Double](m))
     }
 }

@@ -1,6 +1,7 @@
 package com.tadp.utn.frba.c1_2018.grupo04
 import Suceso._
 import scala.collection.GenSeq
+import scala.collection.mutable
 
 trait Apuesta {
   type Resultado = ArbolRaro[Double, Double]
@@ -10,16 +11,14 @@ trait Apuesta {
 }
 case class ApuestaSimple(jugada: Jugada, monto: Double) extends Apuesta {
   def apply(montoInicial: Double): Resultado = {
-    val (wins: GenSeq[Suceso], losses: GenSeq[Suceso]) =
-      jugada.resultadosPosibles.partition((suceso: Suceso) => jugada.sucesoGanador(suceso))
+    var map = scala.collection.mutable.Map[Double, Double]()
+    jugada.resultadosPosibles.foreach((suceso: Suceso) => {
+      val k = jugada.montoDeApuesta(suceso, monto)
+      map += k -> (jugada.probabilidadDe(suceso) + map.get(k).getOrElse(0.0))
+    })
+    val nodos = map.map((p) => NodoArbol(p._2, HojaArbol[Double, Double](p._1)))
     NodoArbol[Double, Double](
-      100.0,
-      NodoArbol(
-        losses.map(jugada.probabilidadDe(_)).sum,
-        HojaArbol(-monto)),
-      NodoArbol(
-        wins.map(jugada.probabilidadDe(_)).sum,
-        HojaArbol(jugada.ganancia(monto) - monto))).map(montoInicial + _)
+      100.0, nodos.toSeq: _*).map(montoInicial + _)
   }
 }
 case class ApuestaCompuesta(apuestas: GenSeq[ApuestaSimple]) extends Apuesta {

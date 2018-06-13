@@ -11,75 +11,59 @@ class Apuesta_Test {
   var apuesta2: ApuestaSimple = _
   var apuestaCompuesta1: ApuestaCompuesta = _
   @Before
-  def setup() = { 
+  def setup() = {
     apuesta1 = ApuestaSimple(Cara(), 10.0)
     apuesta2 = ApuestaSimple(Numero(0), 15.0)
     apuestaCompuesta1 = ApuestaCompuesta(Seq(apuesta1, apuesta2))
   }
 
-  def par() = { 
-    apuesta1 = ApuestaSimple(Cara(), 10.0)
-    apuesta2 = ApuestaSimple(Numero(0), 15.0)
-    apuestaCompuesta1 = ApuestaCompuesta(Seq(apuesta1, apuesta2).par)
-  }
-  
   @Test
   def TestApuestaSimple1() = {
-    val res = apuesta1(10.0)
-    assertEquals(
-      NodoArbol(
-        100.0,
-        NodoArbol(50.0, HojaArbol(0.0)),
-        NodoArbol(50.0, HojaArbol(20.0))): ArbolRaro[Double, Double],
-      res)
+    val res = apuesta1.aplanada(10.0)
+    assertEquals(2, res.length)
+    val Some(res1) = res.find(_._1 == 0.0)
+    val Some(res2) = res.find(_._1 == 20.0)
+    assertEquals(Cara().probabilidad, res2._2, 0.05)
+    assertEquals(100.0 - Cara().probabilidad, res1._2, 0.05)
     res
   }
   @Test
   def TestApuestaSimple2() = {
-    val res = apuesta2(15.0)
-    val NodoArbol(_,
-      NodoArbol(p1, HojaArbol(m1)),
-      NodoArbol(p2, HojaArbol(m2))): ArbolRaro[Double, Double] = res
-    assertEquals(m1, 0.0, 0.05)
-    assertEquals(m2, 540.0, 0.05)
-    assertEquals(p1, 100.0 - Numero(0).probabilidad, 0.05)
-    assertEquals(p2, Numero(0).probabilidad, 0.05)
+    val res = apuesta2.aplanada(15.0)
+    assertEquals(2, res.length)
+    val Some(res1) = res.find(_._1 == 0.0)
+    val Some(res2) = res.find(_._1 == 540.0)
+    assertEquals(100.0 - Numero(0).probabilidad, res1._2, 0.05)
+    assertEquals(Numero(0).probabilidad, res2._2, 0.05)
     res
   }
   @Test
   def TestApuestaCompuesta1() = {
-    val res = apuestaCompuesta1(15.0)
-    val NodoArbol(_,
-      NodoArbol(p1, HojaArbol(m1)),
-      NodoArbol(p4,
-        NodoArbol(_,
-          NodoArbol(p2, HojaArbol(m2)),
-          NodoArbol(p3, HojaArbol(m3))
-          ))): ArbolRaro[Double, Double] = res
-    assertEquals(m1, 5.0, 0.05)
-    assertEquals(m2, 10.0, 0.05)
-    assertEquals(m3, 550.0, 0.05)
-    assertEquals(p1, Cara().probabilidad, 0.05)
-    assertEquals(p2, 100.0 - Numero(0).probabilidad, 0.05)
-    assertEquals(p3, Numero(0).probabilidad, 0.05)
-    assertEquals(p4, Cruz().probabilidad, 0.05)
-    res
-  }
-  @Test
-  def TestAplanarResultado() = {
-    val x = apuestaCompuesta1.aplanada(15.0)
-    assertEquals(3, x.length)
-    val Some(res1) = x.find(_._1 == 550)
-    val Some(res2) = x.find(_._1 == 5)
-    val Some(res3) = x.find(_._1 == 10)
-    assertEquals(res2._2, Cara().probabilidad, 0.05)
+    val res = apuestaCompuesta1.aplanada(15.0)
+    assertEquals(3, res.length)
+    val Some(res1) = res.find(_._1 == 550)
+    val Some(res2) = res.find(_._1 == 5)
+    val Some(res3) = res.find(_._1 == 10)
+    assertEquals(Cara().probabilidad, res2._2, 0.05)
     assertEquals(
       Cara().probabilidad * Numero(0).probabilidad / 100.0,
       res1._2, 0.05)
     assertEquals(
       Cara().probabilidad * (100.0 - Numero(0).probabilidad) / 100.0,
       res3._2, 0.05)
-    x
+    res
+  }
+  @Test
+  def TestApuestaMultipleResultado() = {
+    val res = ApuestaSimple(Cara2(), 10.0).aplanada(10)
+    assertEquals(3, res.length)
+    val Some(res1) = res.find(_._1 == 20)
+    val Some(res2) = res.find(_._1 == 10)
+    val Some(res3) = res.find(_._1 == 0)
+    assertEquals(Cruz2().probabilidad,res1._2, 0.05)
+    assertEquals(Parada().probabilidad,res2._2, 0.05)
+    assertEquals(Cara2().probabilidad, res3._2, 0.05)
+	  res
   }
   @Test
   def TestFalla() = {
